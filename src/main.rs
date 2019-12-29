@@ -13,14 +13,10 @@ struct Post {
 
 fn main() -> Result<()> {
 
-    println!("Rust CLI Blog: v0.0.2 - (c) Max Rumsey 2019");
-    println!("Commands:");
-		println!("get/g = Open an entry.");
-		println!("comment/m = Make a comment on an entry.");
-		println!("create/c = Create an entry.");
+    show_help();
 
-    let conn = Connection::open("blog.db")?;
-
+		// Creating and setting up database and tables.
+		let conn = Connection::open("blog.db")?;
     conn.execute(
         "create table if not exists blog_posts (
              id integer primary key,
@@ -38,6 +34,8 @@ fn main() -> Result<()> {
 			 )",
 			NO_PARAMS,
 		)?;
+		
+		// Command loop.
 		loop {
 			console("Enter your command: ");
 
@@ -93,16 +91,18 @@ fn main() -> Result<()> {
 					)
 				)?;
 
-				// TODO: Fix
-				/*				 
-				let count = posts.cloned().count();
-				if count == 0 {
+				let postvec: Vec<_> = posts.collect();
+
+				let lineco = postvec.len();
+				if lineco == 0 {
 					println!("No entries found.");
-					break Ok(());
+					continue;
+				} else {
+					println!("{} entries were returned.\n", lineco)
 				}
-				*/
 				
-				for post_res in posts {
+				
+				for post_res in postvec {
 					let post = post_res.unwrap();
 					println!("**POST**");
 					println!("Title: {}, id: {}", post.title, post.id);
@@ -151,6 +151,10 @@ fn main() -> Result<()> {
 					"INSERT INTO blog_comments (author, text_content, parent_post) values (?1, ?2, ?3)",
 					&[&name, &text, &(id.to_string())]
 				)?;
+			} else if (command == "h") || (command == "help") {
+				show_help();
+			} else {
+				println!("Command not found.")
 			}
 		}
 }
@@ -188,4 +192,13 @@ fn does_post_exist(conn: &Connection, id: i32) -> bool {
 	} else {
 		return true;
 	}
+}
+
+fn show_help() {
+	println!("\nRust CLI Blog: v0.0.4 - (c) Max Rumsey 2019");
+  println!("Commands:");
+	println!("get/g = Open an entry.");
+	println!("comment/m = Make a comment on an entry.");
+	println!("create/c = Create an entry.");
+	println!("help/h = Shows this screen.");
 }
