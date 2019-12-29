@@ -11,6 +11,13 @@ struct Post {
 		id: i32
 }
 
+#[derive(Debug)]
+struct Comment {
+		author: String,
+		text_content: String,
+		id: i32
+}
+
 fn main() -> Result<()> {
 
     show_help();
@@ -54,7 +61,11 @@ fn main() -> Result<()> {
 						if input == "<<FIN>>" {
 							break;
 						} else {
-							content = format!("{}\n{}", content.to_string(), input.to_string())
+							if content.len() != 0 {
+								content = format!("{}\n{}", content.to_string(), input.to_string());
+							} else {
+								content = format!("{}", input.to_string());
+							}
 						}
 					}
 
@@ -64,7 +75,8 @@ fn main() -> Result<()> {
 					println!("{}", content);
 					console("(Y)es/No: ");
 
-					if (get_input().chars().next().unwrap() == 'Y') || (get_input().chars().next().unwrap() == 'y') {
+					let question = get_input();
+					if (question.chars().next().unwrap() == 'Y') || (question.chars().next().unwrap() == 'y') {
 						break;
 					}
 				}
@@ -81,7 +93,14 @@ fn main() -> Result<()> {
 					 WHERE id = ?"
 				).unwrap();
 				// TODO: Prevent from panicing from non-int.
-				let posts = stmt.query_map(&[id.parse::<i32>().unwrap()], |row|
+				let pid = match id.parse::<i32>() {
+					Ok(x) => x,
+					Err(_e) => {
+						println!("Failed to parse POST ID. Are you sure it is a valid integer?");
+						continue;
+					}
+				};
+				let posts = stmt.query_map(&[pid], |row|
 					Ok(
 						Post {
 							title: row.get(0).unwrap(),
@@ -110,6 +129,31 @@ fn main() -> Result<()> {
 					println!("{}", post.text_content);
 					break;
 				}
+
+				console("\nRetrieve Comments? (Y)es/No: ");
+				let question = get_input();
+				if (question.chars().next().unwrap() == 'Y') || (question.chars().next().unwrap() == 'y') {
+					let mut stmt = conn.prepare(
+						"SELECT author, text_content, id from blog_comments
+						 WHERE parent_post = ?"
+					).unwrap();
+					// TODO: Prevent from panicing from non-int.
+					let posts = stmt.query_map(&[pid], |row|
+						Ok(
+							Comment {
+								author: row.get(0).unwrap(),
+								text_content: row.get(1).unwrap(),
+								id: row.get(2).unwrap()
+							}
+						)
+					)?;
+
+					for post in posts {
+						let comment = post.unwrap();
+						println!("Comment by {}, ID: {}", comment.author, comment.id);
+						println!("{}\n", comment.text_content);
+					}
+				}
 			} else if (command == "m") || (command == "comment") {
 				let mut name;
 				let mut id;
@@ -135,14 +179,19 @@ fn main() -> Result<()> {
 						if input == "<<FIN>>" {
 							break;
 						} else {
-							text = format!("{}\n{}", text.to_string(), input.to_string())
+							if text.len() != 0 {
+								text = format!("{}\n{}", text.to_string(), input.to_string());
+							} else {
+								text = format!("{}", input.to_string());
+							}
 						}
 					}
 
 					println!("Is this correct?");
 					console("(Y)es/No: ");
 
-					if (get_input().chars().next().unwrap() == 'Y') || (get_input().chars().next().unwrap() == 'y') {
+					let question = get_input();
+					if (question.chars().next().unwrap() == 'Y') || (question.chars().next().unwrap() == 'y') {
 						break;
 					}
 				}
@@ -195,7 +244,7 @@ fn does_post_exist(conn: &Connection, id: i32) -> bool {
 }
 
 fn show_help() {
-	println!("\nRust CLI Blog: v0.0.4 - (c) Max Rumsey 2019");
+	println!("\nRust CLI Blog: v0.0.5 - (c) Max Rumsey 2019");
   println!("Commands:");
 	println!("get/g = Open an entry.");
 	println!("comment/m = Make a comment on an entry.");
