@@ -1,22 +1,11 @@
 extern crate rusqlite;
+mod helper;
+
+use helper::*;
+use helper::structs::*;
 
 use rusqlite::{Connection, Result};
 use rusqlite::NO_PARAMS;
-use std::io::{self, Write};
-
-#[derive(Debug)]
-struct Post {
-    title: String,
-		text_content: String,
-		id: i32
-}
-
-#[derive(Debug)]
-struct Comment {
-		author: String,
-		text_content: String,
-		id: i32
-}
 
 fn main() -> Result<()> {
 
@@ -49,8 +38,10 @@ fn main() -> Result<()> {
 			let command = get_input();
 			
 			if (command == "create") || (command == "c") {
+				
 				let mut title;
 				let mut content;
+
 				loop {
 					console("Enter Title Of Post: ");
 					title = get_input();
@@ -79,20 +70,27 @@ fn main() -> Result<()> {
 					if (question.chars().next().unwrap() == 'Y') || (question.chars().next().unwrap() == 'y') {
 						break;
 					}
+
 				}
+
+				// Entering post into DB.
 				conn.execute(
 					"INSERT INTO blog_posts (title, text_content) values (?1, ?2)",
 					&[&title, &content]
 				)?;
 				
 			} else if (command == "get") || (command == "g") {
+
 				console("Enter the ID of the entry you would like to get: ");
 				let id = get_input();
+
+				// Preparing DB check for whether post exists
 				let mut stmt = conn.prepare(
 					"SELECT title, text_content, id from blog_posts
 					 WHERE id = ?"
 				).unwrap();
-				// TODO: Prevent from panicing from non-int.
+
+				// Getting post ID number and handling non-ints
 				let pid = match id.parse::<i32>() {
 					Ok(x) => x,
 					Err(_e) => {
@@ -100,6 +98,8 @@ fn main() -> Result<()> {
 						continue;
 					}
 				};
+
+				// Executing and parsing results
 				let posts = stmt.query_map(&[pid], |row|
 					Ok(
 						Post {
@@ -110,8 +110,10 @@ fn main() -> Result<()> {
 					)
 				)?;
 
+				// Changing into Vector to allow for multiple uses of iterator (len() and iter)
 				let postvec: Vec<_> = posts.collect();
 
+				// Checking for number of returned posts
 				let lineco = postvec.len();
 				if lineco == 0 {
 					println!("No entries found.");
@@ -120,7 +122,7 @@ fn main() -> Result<()> {
 					println!("{} entries were returned.\n", lineco)
 				}
 				
-				
+				// Printing loop
 				for post_res in postvec {
 					let post = post_res.unwrap();
 					println!("**POST**");
@@ -130,14 +132,18 @@ fn main() -> Result<()> {
 					break;
 				}
 
+				// Fetching comments
 				console("\nRetrieve Comments? (Y)es/No: ");
 				let question = get_input();
 				if (question.chars().next().unwrap() == 'Y') || (question.chars().next().unwrap() == 'y') {
+					
+					// Fetching comments from DB
 					let mut stmt = conn.prepare(
 						"SELECT author, text_content, id from blog_comments
 						 WHERE parent_post = ?"
 					).unwrap();
-					// TODO: Prevent from panicing from non-int.
+
+					// Parsing results
 					let posts = stmt.query_map(&[pid], |row|
 						Ok(
 							Comment {
@@ -148,17 +154,21 @@ fn main() -> Result<()> {
 						)
 					)?;
 
+					// Print loop
 					for post in posts {
 						let comment = post.unwrap();
 						println!("Comment by {}, ID: {}", comment.author, comment.id);
 						println!("{}\n", comment.text_content);
 					}
 				}
+
 			} else if (command == "m") || (command == "comment") {
+
 				let mut name;
 				let mut id;
 				let mut text;
 				
+				// Looping through dialogue until satisfies constraints of comment
 				loop {
 					console("Enter Name: ");
 					name = get_input();
@@ -166,19 +176,31 @@ fn main() -> Result<()> {
 					console("Enter POST ID: ");
 					let orig_post = get_input();
 
-					// TODO: Prevent from panicing from non-int.
-					id = orig_post.parse::<i32>().unwrap();
+					// Parsing post ID and handling errors
+					id = match orig_post.parse::<i32>() {
+						Ok(x) => x,
+						Err(_e) => {
+							println!("Failed to parse POST ID. Are you sure it is a valid integer?");
+							continue;
+						}
+					};
+
+					
 					if !does_post_exist(&conn, id) {
 						println!("Post not found! Is the POST ID correct?");
 						continue;
 					}
+
+					// Comment contents loop
 					println!("Enter the content of the comment below. When you are finished, type <<FIN>> on a new line:");
 					text = String::new();
+
 					loop {
 						let input = get_input();
 						if input == "<<FIN>>" {
 							break;
 						} else {
+							// Preventing whitespace at start of string from no preexisting input
 							if text.len() != 0 {
 								text = format!("{}\n{}", text.to_string(), input.to_string());
 							} else {
@@ -187,6 +209,7 @@ fn main() -> Result<()> {
 						}
 					}
 
+					// Breaking dialogue loop if constraints are satisfied
 					println!("Is this correct?");
 					console("(Y)es/No: ");
 
@@ -196,58 +219,20 @@ fn main() -> Result<()> {
 					}
 				}
 
+				// Inserting into DB
 				conn.execute(
 					"INSERT INTO blog_comments (author, text_content, parent_post) values (?1, ?2, ?3)",
 					&[&name, &text, &(id.to_string())]
 				)?;
+
 			} else if (command == "h") || (command == "help") {
+
 				show_help();
+
 			} else {
+
 				println!("Command not found.")
+
 			}
 		}
-}
-
-fn get_input() -> String {
-	let mut input = String::new();
-	std::io::stdin().read_line(&mut input).expect("error: unable to read user input");
-	input = input.trim().to_string();
-	return input;
-}
-fn console(output: &str) {
-	print!("{}", output);
-
-  io::stdout().flush().unwrap();
-}
-fn does_post_exist(conn: &Connection, id: i32) -> bool {
-	let mut stmt = conn.prepare(
-		"SELECT title, text_content, id from blog_posts
-		 WHERE id = ?"
-	).unwrap();
-	let posts = stmt.query_map(&[id], |row|
-		Ok(
-			Post {
-				title: row.get(0).unwrap(),
-				text_content: row.get(1).unwrap(),
-				id: row.get(2).unwrap()
-			}
-		)
-	);
-				 
-	let count = posts.unwrap().count();
-	if count == 0 {
-		println!("No entries found.");
-		return false;
-	} else {
-		return true;
-	}
-}
-
-fn show_help() {
-	println!("\nRust CLI Blog: v0.0.5 - (c) Max Rumsey 2019");
-  println!("Commands:");
-	println!("get/g = Open an entry.");
-	println!("comment/m = Make a comment on an entry.");
-	println!("create/c = Create an entry.");
-	println!("help/h = Shows this screen.");
 }
