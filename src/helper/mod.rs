@@ -5,7 +5,7 @@ pub mod structs;
 use structs::*;
 
 pub fn show_help() {
-	println!("\nRust CLI Blog: v0.0.6 - (c) Max Rumsey 2019");
+	println!("\nRust CLI Blog: v0.0.7 - (c) Max Rumsey 2019");
   println!("Commands:");
 	println!("get/g = Open an entry.");
 	println!("comment/m = Make a comment on an entry.");
