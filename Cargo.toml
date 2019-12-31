@@ -1,6 +1,6 @@
 [package]
 name = "rust_cli_blog"
-version = "0.0.7"
+version = "0.0.8"
 authors = ["Max Rumsey <max@maxrumsey.xyz>"]
 edition = "2018"
 

@@ -5,11 +5,12 @@ pub mod structs;
 use structs::*;
 
 pub fn show_help() {
-	println!("\nRust CLI Blog: v0.0.7 - (c) Max Rumsey 2019");
+	println!("\nRust CLI Blog: v0.0.8 - (c) Max Rumsey 2019\n");
   println!("Commands:");
 	println!("get/g = Open an entry.");
 	println!("comment/m = Make a comment on an entry.");
 	println!("create/c = Create an entry.");
+	println!("delete/d = Delete a post and all comments associated with it.");
 	println!("help/h = Shows this screen.");
 }
 
@@ -30,7 +31,7 @@ pub fn does_post_exist(conn: &Connection, id: i32) -> bool {
 				 
 	let count = posts.unwrap().count();
 	if count == 0 {
-		println!("No entries found.");
+		println!("No entries found under this POST ID.");
 		return false;
 	} else {
 		return true;
@@ -43,6 +44,7 @@ pub fn get_input() -> String {
 	input = input.trim().to_string();
 	return input;
 }
+
 pub fn console(output: &str) {
 	print!("{}", output);
 
