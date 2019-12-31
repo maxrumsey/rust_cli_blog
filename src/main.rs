@@ -33,7 +33,7 @@ fn main() -> Result<()> {
 		
 		// Command loop.
 		loop {
-			console("Enter your command: ");
+			console("\nEnter your command: ");
 
 			let command = get_input();
 			
@@ -65,6 +65,10 @@ fn main() -> Result<()> {
 					continue;
 				}
 
+			} else if (command == "remove") || (command == "r") {
+				if commands::comment_remove::remove(&conn) {
+					continue;
+				}
 			} else {
 
 				println!("Command not found.")

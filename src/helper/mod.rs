@@ -5,12 +5,13 @@ pub mod structs;
 use structs::*;
 
 pub fn show_help() {
-	println!("\nRust CLI Blog: v0.0.8 - (c) Max Rumsey 2019\n");
+	println!("\nRust CLI Blog: v0.0.9 - (c) Max Rumsey 2019\n");
   println!("Commands:");
 	println!("get/g = Open an entry.");
 	println!("comment/m = Make a comment on an entry.");
 	println!("create/c = Create an entry.");
 	println!("delete/d = Delete a post and all comments associated with it.");
+	println!("remove/r = Remove a comment.");
 	println!("help/h = Shows this screen.");
 }
 
@@ -32,6 +33,29 @@ pub fn does_post_exist(conn: &Connection, id: i32) -> bool {
 	let count = posts.unwrap().count();
 	if count == 0 {
 		println!("No entries found under this POST ID.");
+		return false;
+	} else {
+		return true;
+	}
+}
+pub fn does_comment_exist(conn: &Connection, id: i32) -> bool {
+	let mut stmt = conn.prepare(
+		"SELECT author, text_content, id from blog_comments
+		 WHERE id = ?"
+	).unwrap();
+	let comments = stmt.query_map(&[id], |row|
+		Ok(
+			Comment {
+				author: row.get(0).unwrap(),
+				text_content: row.get(1).unwrap(),
+				id: row.get(2).unwrap()
+			}
+		)
+	);
+				 
+	let count = comments.unwrap().count();
+	if count == 0 {
+		println!("No comments found under this COMMENT ID.");
 		return false;
 	} else {
 		return true;

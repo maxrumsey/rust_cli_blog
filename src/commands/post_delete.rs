@@ -15,7 +15,7 @@ pub fn delete(conn: &Connection) -> bool {
 	};
 
 	if !does_post_exist(conn, pid) {
-		println!("We failed to find any posts under that POST ID. Maybe it has already been deleted or you failed to enter it correctly?");
+		println!("We failed to find any posts under that POST ID. Maybe it has already been deleted or you have failed to enter it correctly?");
 		return true;
 	}
 

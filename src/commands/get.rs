@@ -58,6 +58,7 @@ pub fn get(conn: &Connection) -> bool {
 	console("\nRetrieve Comments? (Y)es/No: ");
 	let question = get_input();
 	if (question.chars().next().unwrap() == 'Y') || (question.chars().next().unwrap() == 'y') {
+		println!("");
 		
 		// Fetching comments from DB
 		let mut stmt = conn.prepare(
