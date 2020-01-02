@@ -5,13 +5,14 @@ pub mod structs;
 use structs::*;
 
 pub fn show_help() {
-	println!("\nRust CLI Blog: v0.0.9 - (c) Max Rumsey 2019\n");
+	println!("\nRust CLI Blog: v0.1.0 - (c) Max Rumsey 2019\n");
   println!("Commands:");
 	println!("get/g = Open an entry.");
 	println!("comment/m = Make a comment on an entry.");
 	println!("create/c = Create an entry.");
 	println!("delete/d = Delete a post and all comments associated with it.");
 	println!("remove/r = Remove a comment.");
+	println!("latest/l = Gets the latest entry from the database.");
 	println!("help/h = Shows this screen.");
 }
 

@@ -69,6 +69,8 @@ fn main() -> Result<()> {
 				if commands::comment_remove::remove(&conn) {
 					continue;
 				}
+			} else if (command == "l") || (command == "latest") {
+				commands::latest::latest(&conn);
 			} else {
 
 				println!("Command not found.")

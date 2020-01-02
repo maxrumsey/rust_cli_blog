@@ -1,28 +1,18 @@
 use rusqlite::Connection;
 use crate::helper::*;
 use crate::structs::*;
+use rusqlite::NO_PARAMS;
 
-pub fn get(conn: &Connection) -> bool {
-	console("Enter the ID of the entry you would like to get: ");
-	let id = get_input();
+pub fn latest(conn: &Connection) -> bool {
+	let mut pid = 1;
 
 	// Preparing DB query to fetch post
 	let mut stmt = conn.prepare(
-		"SELECT title, text_content, id from blog_posts
-			WHERE id = ?"
+		"SELECT title, text_content, id FROM blog_posts ORDER BY id DESC LIMIT 1"
 	).unwrap();
 
-	// Getting post ID number and handling non-ints
-	let pid = match id.parse::<i32>() {
-		Ok(x) => x,
-		Err(_e) => {
-			println!("Failed to parse POST ID. Are you sure it is a valid integer?");
-			return true;
-		}
-	};
-
 	// Executing and parsing results
-	let posts = stmt.query_map(&[pid], |row|
+	let posts = stmt.query_map(NO_PARAMS, |row|
 		Ok(
 			Post {
 				title: row.get(0).unwrap(),
@@ -51,9 +41,9 @@ pub fn get(conn: &Connection) -> bool {
 		println!("Title: {}, id: {}", post.title, post.id);
 		println!("*CONTENTS*");
 		println!("{}", post.text_content);
+		pid = post.id;
 		break;
 	}
-
 	// Fetching comments
 	console("\nRetrieve Comments? (Y)es/No: ");
 	let question = get_input();

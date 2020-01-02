@@ -23,7 +23,7 @@ pub fn create(conn: &Connection) -> bool {
 			}
 		}
 
-		println!("Is this correct?");
+		println!("\nIs this correct?");
 		println!("Title: {}", title);
 		println!("Content:");
 		println!("{}", content);
